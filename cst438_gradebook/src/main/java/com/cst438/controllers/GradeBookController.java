@@ -2,6 +2,9 @@ package com.cst438.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.sql.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -154,6 +157,46 @@ public class GradeBookController {
 			assignmentGradeRepository.save(ag);
 		}
 		
+	}
+	
+	@PostMapping("/gradebook")
+	@Transactional
+	public AssignmentListDTO.AssignmentDTO addAssignment( @RequestBody AssignmentListDTO.AssignmentDTO assignmentDTO  ) throws ParseException { 
+
+		String email = "dwisneski@csumb.edu";
+		Course course  = courseRepository.findById(assignmentDTO.courseId).orElse(null);
+		int id = assignmentDTO.assignmentId;
+		Assignment assignment = assignmentRepository.findById(id).orElse(null);
+		
+		
+		if (course != null &&  course.getInstructor().equals(email) && assignment == null) {
+			Assignment newAssignment = new Assignment();
+			newAssignment.setCourse(course);
+			newAssignment.setName(assignmentDTO.assignmentName);
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
+			java.util.Date date = sdf.parse(assignmentDTO.dueDate);
+			java.sql.Date sqlDate = new Date(date.getTime());
+			newAssignment.setDueDate(sqlDate);
+			newAssignment.setNeedsGrading(0);
+			newAssignment.setCourse(course);
+			
+			AssignmentListDTO.AssignmentDTO result = createAssignmentDTO(newAssignment);
+			return result;
+		} else {
+			throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "Adding assignment failed");
+		}
+		
+	}
+	
+	private AssignmentListDTO.AssignmentDTO createAssignmentDTO(Assignment a) {
+		AssignmentListDTO.AssignmentDTO assignmentDTO = new AssignmentListDTO.AssignmentDTO(
+				a.getId(),
+				a.getCourse().getCourse_id(),
+				a.getName(),
+				a.getDueDate().toString(),
+				a.getCourse().getTitle()
+				);
+		return assignmentDTO;
 	}
 	
 	private Assignment checkAssignment(int assignmentId, String email) {
