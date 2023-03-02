@@ -159,44 +159,21 @@ public class GradeBookController {
 		
 	}
 	
-	@PostMapping("/gradebook")
+	@PostMapping("/gradebook/{course_id}")
 	@Transactional
-	public AssignmentListDTO.AssignmentDTO addAssignment( @RequestBody AssignmentListDTO.AssignmentDTO assignmentDTO  ) throws ParseException { 
-
+	public boolean addAssignment( @RequestBody Assignment assignment, @PathVariable int course_id){ 
+		
 		String email = "dwisneski@csumb.edu";
-		Course course  = courseRepository.findById(assignmentDTO.courseId).orElse(null);
-		int id = assignmentDTO.assignmentId;
-		Assignment assignment = assignmentRepository.findById(id).orElse(null);
-		
-		
-		if (course != null &&  course.getInstructor().equals(email) && assignment == null) {
-			Assignment newAssignment = new Assignment();
-			newAssignment.setCourse(course);
-			newAssignment.setName(assignmentDTO.assignmentName);
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
-			java.util.Date date = sdf.parse(assignmentDTO.dueDate);
-			java.sql.Date sqlDate = new Date(date.getTime());
-			newAssignment.setDueDate(sqlDate);
-			newAssignment.setNeedsGrading(0);
-			newAssignment.setCourse(course);
-			
-			AssignmentListDTO.AssignmentDTO result = createAssignmentDTO(newAssignment);
-			return result;
-		} else {
-			throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "Adding assignment failed");
+
+		Course c = courseRepository.findById(course_id).orElse(null);
+		if (!c.getInstructor().equals(email)) {
+			throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "Not Authorized. " );
 		}
+		assignment.setCourse(c);
 		
-	}
-	
-	private AssignmentListDTO.AssignmentDTO createAssignmentDTO(Assignment a) {
-		AssignmentListDTO.AssignmentDTO assignmentDTO = new AssignmentListDTO.AssignmentDTO(
-				a.getId(),
-				a.getCourse().getCourse_id(),
-				a.getName(),
-				a.getDueDate().toString(),
-				a.getCourse().getTitle()
-				);
-		return assignmentDTO;
+		assignmentRepository.save(assignment);
+		
+		return true;
 	}
 	
 	private Assignment checkAssignment(int assignmentId, String email) {
