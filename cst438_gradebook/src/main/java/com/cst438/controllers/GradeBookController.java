@@ -156,7 +156,6 @@ public class GradeBookController {
 			
 			assignmentGradeRepository.save(ag);
 		}
-		
 	}
 	
 	@PostMapping("/gradebook/{course_id}")
@@ -172,6 +171,48 @@ public class GradeBookController {
 		assignment.setCourse(c);
 		
 		assignmentRepository.save(assignment);
+		
+		return true;
+	}
+	
+	@PutMapping("/gradebook/{id}/{newName}")
+	@Transactional
+	public boolean changeAssignmentName ( @PathVariable String newName, @PathVariable("id") Integer assignmentId ) {
+		
+		String email = "dwisneski@csumb.edu";
+		
+		Assignment assignment = checkAssignment( assignmentId, email );
+		
+		assignment.setName(newName);
+		
+		assignmentRepository.save(assignment);
+		
+		return true;
+	}
+	
+	@PostMapping("/gradebook/{id}/delete")
+	@Transactional
+	public boolean deleteAssignment ( @PathVariable("id") Integer assignmentId ) {
+		
+		String email = "dwisneski@csumb.edu";
+		
+		Assignment assignment = checkAssignment ( assignmentId, email );
+		
+		GradebookDTO gradebook = new GradebookDTO();
+		gradebook.assignmentId= assignmentId;
+		gradebook.assignmentName = assignment.getName();
+		for (Enrollment e : assignment.getCourse().getEnrollments()) {
+			GradebookDTO.Grade grade = new GradebookDTO.Grade();
+			grade.name = e.getStudentName();
+			grade.email = e.getStudentEmail();
+			// does student have a grade for this assignment
+			AssignmentGrade ag = assignmentGradeRepository.findByAssignmentIdAndStudentEmail(assignmentId,  grade.email);
+			if (ag != null) {
+				throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Unable to delete. Students have grades associated with this assignment. "+assignmentId );
+			}
+		}
+		
+		assignmentRepository.delete(assignment);
 		
 		return true;
 	}
