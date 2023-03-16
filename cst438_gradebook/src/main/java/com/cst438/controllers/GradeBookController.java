@@ -157,7 +157,7 @@ public class GradeBookController {
 	
 	@PostMapping("/gradebook/{course_id}")
 	@Transactional
-	public boolean addAssignment( @RequestBody Assignment assignment, @PathVariable int course_id){ 
+	public Assignment addAssignment( @RequestBody Assignment assignment, @PathVariable int course_id){ 
 		
 		String email = "dwisneski@csumb.edu";
 
@@ -169,7 +169,7 @@ public class GradeBookController {
 		
 		assignmentRepository.save(assignment);
 		
-		return true;
+		return assignment;
 	}
 	
 	@PutMapping("/gradebook/{id}/{newName}")

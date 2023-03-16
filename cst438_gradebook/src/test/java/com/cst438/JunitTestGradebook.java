@@ -58,6 +58,7 @@ public class JunitTestGradebook {
 	public static final String TEST_INSTRUCTOR_EMAIL = "dwisneski@csumb.edu";
 	public static final int TEST_YEAR = 2021;
 	public static final String TEST_SEMESTER = "Fall";
+	public static final String TEST_ASSIGNMENT_NAME = "Test Assignment";
 
 	@MockBean
 	AssignmentRepository assignmentRepository;
@@ -243,64 +244,51 @@ public class JunitTestGradebook {
 		verify(assignmentGradeRepository, times(1)).save(updatedag);
 	}
 	
-//	@Test
-//    public void testAddAssignment() throws Exception {
-//		MockHttpServletResponse response;
-//
-//		// mock database data
-//
-//		Course course = new Course();
-//		course.setCourse_id(TEST_COURSE_ID);
-//		course.setSemester(TEST_SEMESTER);
-//		course.setYear(TEST_YEAR);
-//		course.setInstructor(TEST_INSTRUCTOR_EMAIL);
-//		course.setEnrollments(new java.util.ArrayList<Enrollment>());
-//		course.setAssignments(new java.util.ArrayList<Assignment>());
-//
-//		Enrollment enrollment = new Enrollment();
-//		enrollment.setCourse(course);
-//		course.getEnrollments().add(enrollment);
-//		enrollment.setId(TEST_COURSE_ID);
-//		enrollment.setStudentEmail(TEST_STUDENT_EMAIL);
-//		enrollment.setStudentName(TEST_STUDENT_NAME);
-//
-//		Assignment assignment = new Assignment();
-//		assignment.setCourse(course);
-//		course.getAssignments().add(assignment);
-//		// set dueDate to 1 week before now.
-//		assignment.setDueDate(new java.sql.Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000));
-//		assignment.setId(1);
-//		assignment.setName("Assignment 1");
-//		assignment.setNeedsGrading(1);
-//
-//		AssignmentGrade ag = new AssignmentGrade();
-//		ag.setAssignment(assignment);
-//		ag.setId(1);
-//		ag.setScore("");
-//		ag.setStudentEnrollment(enrollment);
-//
-//		// given -- stubs for database repositories that return test data
-//		given(assignmentRepository.findById(1)).willReturn(Optional.of(assignment));
-//		given(assignmentGradeRepository.findByAssignmentIdAndStudentEmail(1, TEST_STUDENT_EMAIL)).willReturn(null);
-//		given(assignmentGradeRepository.save(any())).willReturn(ag);
-//		
-//		// Create a new Assignment object to add to the database
-//		Assignment newAssignment = new Assignment();
-//		newAssignment.setName("Test Assignment");
-//		newAssignment.setDueDate(new java.sql.Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000));
-//		newAssignment.setId(2);
-//		
-//		response = mvc
-//				.perform(MockMvcRequestBuilders.put("/gradebook/{course_id}", TEST_COURSE_ID).accept(MediaType.APPLICATION_JSON)
-//						.content(asJsonString(newAssignment)).contentType(MediaType.APPLICATION_JSON))
-//				.andReturn().getResponse();
-//
-//		// Verify that the assignment has been added to the database by checking if it exists using the assignmentRepository
-//		Optional<Assignment> savedAssignment = assignmentRepository.findById(2);
-//		assertEquals(true, savedAssignment.isPresent()); // assert that the assignment is present in the database
-//		assertEquals(newAssignment.getDueDate(), savedAssignment.get().getDueDate()); // assert that the due date is correct
-//
-//	}
+	@Test
+    public void testAddAssignment() throws Exception {
+		MockHttpServletResponse response;
+
+		// mock database data
+
+		Course course = new Course();
+		course.setCourse_id(TEST_COURSE_ID);
+		course.setSemester(TEST_SEMESTER);
+		course.setYear(TEST_YEAR);
+		course.setInstructor(TEST_INSTRUCTOR_EMAIL);
+
+		Enrollment enrollment = new Enrollment();
+		enrollment.setCourse(course);
+		enrollment.setId(TEST_COURSE_ID);
+		enrollment.setStudentEmail(TEST_STUDENT_EMAIL);
+		enrollment.setStudentName(TEST_STUDENT_NAME);
+
+		Assignment assignment = new Assignment();
+		assignment.setCourse(course);
+		// set dueDate to 1 week before now.
+		assignment.setDueDate(new java.sql.Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000));
+		assignment.setName(TEST_ASSIGNMENT_NAME);
+		assignment.setNeedsGrading(1);
+
+		AssignmentGrade ag = new AssignmentGrade();
+		ag.setAssignment(assignment);
+
+		// given -- stubs for database repositories that return test data
+		given(assignmentRepository.save(any(Assignment.class))).willReturn(assignment);
+		given(assignmentGradeRepository.save(any(AssignmentGrade.class))).willReturn(ag);
+		given(courseRepository.findById(TEST_COURSE_ID)).willReturn(Optional.of(course));
+		
+		response = mvc.perform(MockMvcRequestBuilders.post("/gradebook/" + TEST_COURSE_ID).content(asJsonString(assignment))
+				.contentType(MediaType.APPLICATION_JSON)).andReturn().getResponse();
+		// verify return data with entry for one student without no score
+		assertEquals(200, response.getStatus());
+
+		// verify that a save was called on repository
+		verify(assignmentRepository, times(1)).save(any()); // ???
+
+		Assignment returnedAssignment = fromJsonString(response.getContentAsString(), Assignment.class);
+		assertEquals(assignment.getName(), returnedAssignment.getName());
+		assertEquals(assignment.getCourse().getCourse_id(), returnedAssignment.getCourse().getCourse_id());
+	}
 
 	private static String asJsonString(final Object obj) {
 		try {
