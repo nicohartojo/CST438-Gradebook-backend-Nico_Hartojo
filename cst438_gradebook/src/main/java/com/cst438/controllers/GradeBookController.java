@@ -174,7 +174,7 @@ public class GradeBookController {
 	
 	@PutMapping("/gradebook/{id}/{newName}")
 	@Transactional
-	public boolean changeAssignmentName ( @PathVariable String newName, @PathVariable("id") Integer assignmentId ) {
+	public Assignment changeAssignmentName ( @PathVariable String newName, @PathVariable("id") Integer assignmentId ) {
 		
 		String email = "dwisneski@csumb.edu";
 		
@@ -184,12 +184,12 @@ public class GradeBookController {
 		
 		assignmentRepository.save(assignment);
 		
-		return true;
+		return assignment;
 	}
 	
 	@PostMapping("/gradebook/{id}/delete")
 	@Transactional
-	public boolean deleteAssignment ( @PathVariable("id") Integer assignmentId ) {
+	public Assignment deleteAssignment ( @PathVariable("id") Integer assignmentId ) {
 		
 		String email = "dwisneski@csumb.edu";
 		
@@ -211,7 +211,7 @@ public class GradeBookController {
 		
 		assignmentRepository.delete(assignment);
 		
-		return true;
+		return assignment;
 	}
 	
 	private Assignment checkAssignment(int assignmentId, String email) {
