@@ -155,7 +155,7 @@ public class GradeBookController {
 		}
 	}
 	
-	@PostMapping("/gradebook/{course_id}")
+	@PostMapping("/gradebook/addAssignment/{course_id}")
 	@Transactional
 	public Assignment addAssignment( @RequestBody Assignment assignment, @PathVariable int course_id){ 
 		
